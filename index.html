@@ -1,25 +1,377 @@
 
-/* Sufi.ai Demo Chatbot */
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sufi.ai</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Noto+Nastaliq+Urdu&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --night:#12143a;
+  --deep:#0a0b24;
+  --gold:#e4b95c;
+  --gold-soft:#b9954a;
+  --ink:#ecebf7;
+  --muted:#8f93c0;
+  --line:#2a2e66;
+  --panel:#181b4a;
+  --bot:#22265e;
+}
+
+* {box-sizing:border-box}
+
+html,body {
+  height:100%;
+  margin:0;
+}
+
+body {
+  background:var(--deep);
+  color:var(--ink);
+  font-family:"Noto Sans","Noto Nastaliq Urdu",system-ui,sans-serif;
+}
+
+/* INTRO */
+
+.intro {
+  position:fixed;
+  inset:0;
+  z-index:10;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:26px;
+  background:radial-gradient(circle at 50% 42%,#262a78 0%,var(--night) 45%,var(--deep) 100%);
+  transition:opacity 1.2s ease,visibility 1.2s;
+}
+
+.intro.out {
+  opacity:0;
+  visibility:hidden;
+}
+
+.mandala {
+  width:min(78vw,340px);
+  height:min(78vw,340px);
+  opacity:.55;
+  transform:scale(.82);
+  transition:opacity 1.8s ease,transform 1.8s ease;
+}
+
+.play .mandala {
+  opacity:1;
+  transform:scale(1);
+}
+
+.mandala svg {
+  width:100%;
+  height:100%;
+}
+
+.mandala g.shape {
+  fill:none;
+  stroke:var(--gold);
+  stroke-width:1.1;
+}
+
+.spin-a {
+  transform-origin:0 0;
+  animation:spin 28s linear infinite;
+}
+
+.spin-b {
+  transform-origin:0 0;
+  animation:spin 40s linear infinite reverse;
+}
+
+.ring {
+  fill:none;
+  stroke:var(--gold);
+  stroke-width:.8;
+  opacity:0;
+  transform-origin:0 0;
+}
+
+.play .ring {
+  animation:ripple 4.5s ease-out infinite;
+}
+
+.play .ring:nth-of-type(2) {
+  animation-delay:1.5s;
+}
+
+.play .ring:nth-of-type(3) {
+  animation-delay:3s;
+}
+
+.core {
+  fill:var(--gold);
+  filter:drop-shadow(0 0 8px var(--gold));
+}
+
+.play .core {
+  animation:pulse 2.2s ease-in-out infinite;
+  transform-origin:0 0;
+}
+
+@keyframes spin {
+  to {transform:rotate(360deg)}
+}
+
+@keyframes ripple {
+  0% {opacity:.8;transform:scale(.2)}
+  100% {opacity:0;transform:scale(1.35)}
+}
+
+@keyframes pulse {
+  50% {transform:scale(1.5)}
+}
+
+.title {
+  font-family:"Cormorant Garamond",serif;
+  font-weight:600;
+  font-size:clamp(40px,11vw,64px);
+  letter-spacing:.04em;
+  color:var(--gold);
+  display:flex;
+  margin:0;
+}
+
+.title span {
+  opacity:0;
+  transform:translateY(14px);
+}
+
+.play .title span {
+  animation:rise .9s ease forwards;
+}
+
+@keyframes rise {
+  to {opacity:1;transform:none}
+}
+
+.welcome {
+  font-family:"Cormorant Garamond",serif;
+  font-size:20px;
+  color:var(--ink);
+  opacity:0;
+  margin:-14px 0 0;
+}
+
+.play .welcome {
+  animation:rise 1s ease 1.2s forwards;
+}
+
+#start {
+  font:inherit;
+  font-weight:600;
+  color:var(--deep);
+  background:var(--gold);
+  border:0;
+  border-radius:999px;
+  padding:13px 34px;
+  cursor:pointer;
+}
+
+.play #start {
+  display:none;
+}
+
+/* CHAT */
+
+.app {
+  width:100%;
+  max-width:680px;
+  height:100%;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  background:var(--panel);
+  border-inline:1px solid var(--line);
+}
+
+header {
+  padding:14px 16px;
+  border-bottom:1px solid var(--line);
+  font-family:"Cormorant Garamond",serif;
+  font-weight:600;
+  font-size:24px;
+  color:var(--gold);
+}
+
+#log {
+  flex:1;
+  overflow-y:auto;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.msg {
+  max-width:85%;
+  padding:10px 14px;
+  border-radius:14px;
+  line-height:1.9;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.me {
+  align-self:flex-start;
+  background:var(--gold);
+  color:var(--deep);
+}
+
+.bot {
+  align-self:flex-end;
+  background:var(--bot);
+}
+
+.hint {
+  color:var(--muted);
+  text-align:center;
+  margin:auto;
+  line-height:2;
+}
+
+form {
+  display:flex;
+  gap:8px;
+  padding:12px;
+  border-top:1px solid var(--line);
+}
+
+#q {
+  flex:1;
+  font:inherit;
+  padding:11px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--night);
+  color:var(--ink);
+  min-width:0;
+}
+
+#send {
+  font:inherit;
+  font-weight:600;
+  padding:0 18px;
+  border:0;
+  border-radius:10px;
+  background:var(--gold);
+  color:var(--deep);
+  cursor:pointer;
+}
+
+#send:disabled {
+  opacity:.5;
+}
+
+#start:focus-visible,
+#send:focus-visible,
+#q:focus-visible {
+  outline:2px solid var(--gold);
+  outline-offset:3px;
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .spin-a,.spin-b,.play .ring,.play .core {
+    animation:none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- INTRO SCREEN -->
+
+<div class="intro" id="intro">
+
+  <div class="mandala">
+    <svg viewBox="-100 -100 200 200" aria-hidden="true">
+
+      <g class="shape spin-a">
+        <rect x="-62" y="-62" width="124" height="124"/>
+        <rect x="-62" y="-62" width="124" height="124" transform="rotate(45)"/>
+        <rect x="-62" y="-62" width="124" height="124" transform="rotate(22.5)"/>
+        <rect x="-62" y="-62" width="124" height="124" transform="rotate(67.5)"/>
+      </g>
+
+      <g class="shape spin-b">
+        <rect x="-38" y="-38" width="76" height="76"/>
+        <rect x="-38" y="-38" width="76" height="76" transform="rotate(45)"/>
+        <circle r="26"/>
+      </g>
+
+      <g class="shape">
+        <circle r="80" opacity=".5"/>
+        <circle r="92" opacity=".25"/>
+      </g>
+
+      <circle class="ring" r="80"/>
+      <circle class="ring" r="80"/>
+      <circle class="ring" r="80"/>
+      <circle class="core" r="4"/>
+
+    </svg>
+  </div>
+
+  <h1 class="title" aria-label="Sufi.ai" id="title"></h1>
+
+  <p class="welcome">Welcome</p>
+
+  <button id="start">شروع کریں</button>
+
+</div>
+
+<!-- CHAT APP -->
+
+<div class="app">
+
+  <header>Sufi.ai</header>
+
+  <div id="log">
+    <div class="hint" id="hint">کچھ بھی پوچھیں</div>
+  </div>
+
+  <form id="f">
+    <input id="q" dir="auto" placeholder="اپنا سوال لکھیں" autocomplete="off" required>
+    <button id="send">بھیجیں</button>
+  </form>
+
+</div>
+
+<script>
+
+/* INTRO ANIMATION */
 
 const intro = document.getElementById("intro");
 const titleEl = document.getElementById("title");
 
-"Sufi.ai".split("").forEach((ch, i) => {
+"Sufi.ai".split("").forEach((ch,i) => {
   const s = document.createElement("span");
   s.textContent = ch;
-  s.style.animationDelay = (0.25 + i * 0.12) + "s";
+  s.style.animationDelay = (0.25+i*0.12)+"s";
   titleEl.appendChild(s);
 });
 
-const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+const wait = ms => new Promise(resolve => setTimeout(resolve,ms));
 
 function speak() {
   return new Promise(resolve => {
-    if (!("speechSynthesis" in window)) return resolve();
 
-    const u = new SpeechSynthesisUtterance(
-      "Welcome to Sufi dot A I"
-    );
+    if (!("speechSynthesis" in window)) {
+      resolve();
+      return;
+    }
+
+    const u = new SpeechSynthesisUtterance("Welcome to Sufi dot A I");
 
     u.lang = "en-US";
     u.rate = 0.85;
@@ -29,17 +381,21 @@ function speak() {
 
     speechSynthesis.cancel();
     speechSynthesis.speak(u);
-    setTimeout(resolve, 7000);
+
+    setTimeout(resolve,7000);
   });
 }
 
-document.getElementById("start").addEventListener("click", async () => {
+document.getElementById("start").addEventListener("click",async () => {
+
   intro.classList.add("play");
 
-  await Promise.all([speak(), wait(4200)]);
+  await Promise.all([speak(),wait(4200)]);
 
   intro.classList.add("out");
+
   document.getElementById("q").focus();
+
 });
 
 /* CHAT SYSTEM */
@@ -49,36 +405,43 @@ const f = document.getElementById("f");
 const q = document.getElementById("q");
 const b = document.getElementById("send");
 
-function add(text, cls) {
+function add(text,cls) {
+
   const hint = document.getElementById("hint");
+
   if (hint) hint.remove();
 
   const d = document.createElement("div");
-  d.className = "msg " + cls;
+
+  d.className = "msg "+cls;
   d.dir = "auto";
   d.textContent = text;
 
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
+
   return d;
 }
 
+/* DEMO ANSWERS */
+
 function getReply(message) {
+
   const t = message.toLowerCase().trim();
 
   if (/hello|hi\b|hey|سلام|السلام علیکم|ہیلو|नमस्ते|नमस्कार/.test(t))
-    return "وعلیکم السلام! Welcome to Sufi.ai. آپ کیسے ہیں؟ میں آپ کی کیا مدد کر سکتا ہوں؟";
+    return "وعلیکم السلام! Welcome to Sufi.ai۔ آپ کیسے ہیں؟ میں آپ کی کیا مدد کر سکتا ہوں؟";
 
   if (/your name|who are you|تم کون|آپ کون|نام کیا|तुम कौन|नाम क्या/.test(t))
-    return "میرا نام Sufi.ai ہے۔ میں ایک Demo Chatbot ہوں، جو آپ کے سوالات کے جواب دینے کے لیے بنایا گیا ہے۔";
+    return "میرا نام Sufi.ai ہے۔ میں ایک Demo Chatbot ہوں جو آپ کے سوالات کے جواب دینے کے لیے بنایا گیا ہے۔";
 
   if (/how are you|کیسے ہو|کیا حال|कैसे हो/.test(t))
     return "میں بالکل ٹھیک ہوں! شکریہ۔ آپ سنائیں کیسے ہیں؟";
 
   if (/what can you do|کیا کر سکتے|کیا مدد|क्या कर सकते/.test(t))
-    return "میں آپ کی عام معلومات، تعلیم، ٹیکنالوجی، کمپیوٹر اور پروگرامنگ سے متعلق بنیادی سوالات میں مدد کر سکتا ہوں۔";
+    return "میں عام معلومات، تعلیم، ٹیکنالوجی، کمپیوٹر اور پروگرامنگ سے متعلق بنیادی سوالات میں مدد کر سکتا ہوں۔";
 
-  if (/python|پائتھن|پائتھون/.test(t))
+  if (/python|پائتھن|पाइथन/.test(t))
     return "Python ایک مشہور Programming Language ہے۔ اسے Web Development، Automation، Data Science اور AI میں استعمال کیا جاتا ہے۔";
 
   if (/javascript|جاوا اسکرپٹ/.test(t))
@@ -96,6 +459,9 @@ function getReply(message) {
   if (/youtube|یوٹیوب|यूट्यूब/.test(t))
     return "YouTube ایک ویڈیو شیئرنگ پلیٹ فارم ہے جہاں آپ ویڈیوز دیکھ اور اپنا Content بنا سکتے ہیں۔";
 
+  if (/free fire|فری فائر/.test(t))
+    return "Free Fire ایک Battle Royale گیم ہے۔ اس میں کھلاڑی ایک دوسرے کے خلاف مقابلہ کرتے ہیں۔";
+
   if (/thank|شکریہ|धन्यवाद/.test(t))
     return "آپ کا بہت شکریہ! Sufi.ai استعمال کرنے کا شکریہ۔";
 
@@ -103,28 +469,31 @@ function getReply(message) {
     return "اللہ حافظ! اپنا خیال رکھیے۔ دوبارہ Sufi.ai پر آئیے گا۔";
 
   if (/time|وقت کیا/.test(t))
-    return "آپ کے آلے کے مطابق موجودہ وقت: " +
-      new Date().toLocaleTimeString();
+    return "آپ کے آلے کے مطابق موجودہ وقت: "+new Date().toLocaleTimeString();
 
   if (/date|تاریخ کیا|آج کون سا دن/.test(t))
-    return "آج کی تاریخ: " +
-      new Date().toLocaleDateString();
+    return "آج کی تاریخ: "+new Date().toLocaleDateString();
 
   return "معذرت! میں ابھی Demo Chatbot ہوں اور میرے پاس محدود جوابات ہیں۔ براہ کرم تعلیم، کمپیوٹر، پروگرامنگ یا ٹیکنالوجی سے متعلق سوال پوچھیں۔";
+
 }
 
-f.addEventListener("submit", async (e) => {
+/* SEND MESSAGE */
+
+f.addEventListener("submit",async (e) => {
+
   e.preventDefault();
 
   const text = q.value.trim();
+
   if (!text || b.disabled) return;
 
   q.value = "";
   b.disabled = true;
 
-  add(text, "me");
+  add(text,"me");
 
-  const pending = add("سوچ رہا ہوں…", "bot");
+  const pending = add("سوچ رہا ہوں…","bot");
 
   await wait(700);
 
@@ -132,5 +501,12 @@ f.addEventListener("submit", async (e) => {
 
   b.disabled = false;
   q.focus();
+
   log.scrollTop = log.scrollHeight;
+
 });
+
+</script>
+
+</body>
+</html>
